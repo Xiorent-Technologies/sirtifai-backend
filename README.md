@@ -85,6 +85,10 @@ BASE_URL=http://localhost:3000
 # File Upload Configuration
 MAX_FILE_SIZE=5242880
 UPLOAD_PATH=uploads/
+
+# Razorpay Configuration
+RAZORPAY_KEY_ID=your-razorpay-key-id
+RAZORPAY_KEY_SECRET=your-razorpay-key-secret
 ```
 
 ## 📚 API Endpoints
@@ -93,12 +97,14 @@ UPLOAD_PATH=uploads/
 - `GET /api/v1/payments` - Get all payments
 - `GET /api/v1/payments/:id` - Get payment by ID
 - `POST /api/v1/payments` - Create new payment
+- `POST /api/v1/payments/create-order` - Create Razorpay order and student record
 - `PUT /api/v1/payments/:id` - Update payment
 - `DELETE /api/v1/payments/:id` - Delete payment
+- `POST /api/v1/payments/verify` - Verify Razorpay payment
 
 ### Invoice Management
 - `GET /api/v1/invoices` - Get all invoices
-- `GET /api/v1/invoices/:id` - Get invoice by ID
+- `GET /api/v1/invoices/:id` - Get invoice by ID (with student details)
 - `POST /api/v1/invoices` - Create new invoice
 - `PUT /api/v1/invoices/:id` - Update invoice
 - `DELETE /api/v1/invoices/:id` - Delete invoice
@@ -176,7 +182,271 @@ To use the invoice email service, you need to configure Gmail SMTP:
 - ✅ **Call-to-Action** - Direct link to view invoice
 - ✅ **Contact Information** - Support email and company details
 
+## 💳 Razorpay Order Creation
+
+### Create Order
+
+**Endpoint:** `POST /api/v1/payments/create-order`
+
+**Description:** Creates a Razorpay order and student record with complete pricing calculations, currency conversion, and invoice generation.
+
+**Request Body:**
+```json
+{
+  "packageData": {
+    "selectedProduct": "fullstack",
+    "selectedAddon": "react",
+    "type": "program",
+    "selectedMonths": 6
+  },
+  "studentData": {
+    "fullName": "John Doe",
+    "dateOfBirth": "1995-05-15",
+    "countryOfCitizenship": "India",
+    "primaryPhone": "+91-9876543210",
+    "email": "john.doe@example.com",
+    "residentialAddress": "123 Main Street",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "zipCode": "400001",
+    "country": "India",
+    "highestQualification": "Bachelor's Degree",
+    "idType": "Aadhar",
+    "idNumber": "123456789012",
+    "agreedToTerms": true,
+    "certifiedInformation": true
+  },
+  "receipt": "receipt_123456"
+}
+```
+
+**Response (Success):**
+```json
+{
+  "success": true,
+  "id": "order_123456789",
+  "amount": 7080000,
+  "currency": "INR",
+  "receipt": "receipt_123456",
+  "status": "created",
+  "studentId": "student_1704067200000",
+  "invoiceLink": "uuid-generated-link",
+  "pricing": {
+    "programPriceUSD": 3000,
+    "totalProgramPriceUSD": 3000,
+    "addOnPriceUSD": 100,
+    "subtotalUSD": 3100,
+    "subtotalINR": 258333,
+    "gstAmount": 46500,
+    "totalAmountUSD": 3658,
+    "totalAmountINR": 304833,
+    "duration": 6,
+    "exchangeRate": {
+      "inrToUsd": 0.012,
+      "usdToInr": 83.33
+    }
+  },
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
+### Order Creation Features
+
+- ✅ **Product Pricing** - Dynamic pricing based on program and addons
+- ✅ **Currency Conversion** - Real-time USD to INR conversion
+- ✅ **GST Calculation** - 18% GST on Indian transactions
+- ✅ **Invoice Generation** - Unique invoice numbers and links
+- ✅ **Student Registration** - Complete student data storage
+- ✅ **Razorpay Integration** - Secure payment order creation
+- ✅ **Data Validation** - Comprehensive input validation
+
+## 💳 Razorpay Payment Verification
+
+### Verify Payment
+
+**Endpoint:** `POST /api/v1/payments/verify`
+
+**Description:** Verifies Razorpay payment signature and updates payment status. Automatically sends invoice email upon successful verification.
+
+**Request Body:**
+```json
+{
+  "razorpay_order_id": "order_123456789",
+  "razorpay_payment_id": "pay_123456789",
+  "razorpay_signature": "signature_hash",
+  "orderId": "order_123456789"
+}
+```
+
+**Response (Success):**
+```json
+{
+  "success": true,
+  "paymentId": "pay_123456789",
+  "orderId": "order_123456789",
+  "invoiceId": "INV-2024-001",
+  "studentId": "student_123",
+  "invoiceLink": "INV-2024-001",
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
+**Response (Error):**
+```json
+{
+  "success": false,
+  "error": "Invalid signature",
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
+### Razorpay Configuration
+
+To use Razorpay payment verification:
+
+1. **Get Razorpay Credentials:**
+   - Sign up at [Razorpay Dashboard](https://dashboard.razorpay.com/)
+   - Get your Key Secret from API Keys section
+
+2. **Update Environment Variables:**
+   ```env
+   RAZORPAY_KEY_SECRET=your-razorpay-key-secret
+   ```
+
+### Payment Verification Features
+
+- ✅ **Signature Verification** - Cryptographically secure signature validation
+- ✅ **Payment Status Update** - Updates payment status to COMPLETED
+- ✅ **Automatic Email** - Sends invoice email after successful payment
+- ✅ **Error Handling** - Comprehensive error responses
+- ✅ **Logging** - Detailed payment verification logs
+
+## 📄 Invoice Retrieval
+
+### Get Invoice Details
+
+**Endpoint:** `GET /api/v1/invoices/:id`
+
+**Description:** Retrieves detailed invoice information including student details. Only returns invoices for completed payments.
+
+**Parameters:**
+- `id` (string) - Invoice ID/link
+
+**Response (Success):**
+```json
+{
+  "success": true,
+  "invoice": {
+    "id": "student_123",
+    "invoiceNumber": "INV-2024-001",
+    "createdAt": "2024-01-15T00:00:00.000Z",
+    "programName": "Full Stack Development",
+    "programPrice": 500,
+    "programPriceINR": 50000,
+    "programDuration": 6,
+    "addonName": "Advanced React",
+    "addonPrice": 100,
+    "addonPriceINR": 10000,
+    "subtotal": 600,
+    "subtotalINR": 60000,
+    "gstRate": 18,
+    "gstAmount": 108,
+    "gstAmountINR": 10800,
+    "total": 708,
+    "totalINR": 70800,
+    "exchangeRate": 100,
+    "paymentStatus": "COMPLETED",
+    "paymentMethod": "Razorpay",
+    "paymentDate": "2024-01-15T00:00:00.000Z",
+    "type": "program"
+  },
+  "student": {
+    "fullName": "John Doe",
+    "email": "john.doe@example.com",
+    "primaryPhone": "+91-9876543210",
+    "residentialAddress": "123 Main Street",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "zipCode": "400001",
+    "country": "India"
+  },
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
+**Response (Error):**
+```json
+{
+  "success": false,
+  "error": "Invoice not found or payment not completed",
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
+### Invoice Retrieval Features
+
+- ✅ **Payment Status Check** - Only returns invoices for completed payments
+- ✅ **Complete Invoice Data** - Program details, pricing, GST calculations
+- ✅ **Student Information** - Full student contact and address details
+- ✅ **Error Handling** - Proper 404 responses for missing invoices
+- ✅ **Security** - Prevents access to unpaid invoices
+
 ## 🧪 Testing
+
+### Test Order Creation Endpoint
+
+**Example using curl:**
+```bash
+curl -X POST http://localhost:3000/api/v1/payments/create-order \
+  -H "Content-Type: application/json" \
+  -d '{
+    "packageData": {
+      "selectedProduct": "fullstack",
+      "selectedAddon": "react",
+      "type": "program",
+      "selectedMonths": 6
+    },
+    "studentData": {
+      "fullName": "John Doe",
+      "dateOfBirth": "1995-05-15",
+      "countryOfCitizenship": "India",
+      "primaryPhone": "+91-9876543210",
+      "email": "john.doe@example.com",
+      "residentialAddress": "123 Main Street",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "zipCode": "400001",
+      "country": "India",
+      "highestQualification": "Bachelor'\''s Degree",
+      "idType": "Aadhar",
+      "idNumber": "123456789012",
+      "agreedToTerms": true,
+      "certifiedInformation": true
+    },
+    "receipt": "receipt_123456"
+  }'
+```
+
+### Test Invoice Retrieval Endpoint
+
+**Example using curl:**
+```bash
+curl -X GET http://localhost:3000/api/v1/invoices/INV-2024-001
+```
+
+### Test Payment Verification Endpoint
+
+**Example using curl:**
+```bash
+curl -X POST http://localhost:3000/api/v1/payments/verify \
+  -H "Content-Type: application/json" \
+  -d '{
+    "razorpay_order_id": "order_123456789",
+    "razorpay_payment_id": "pay_123456789",
+    "razorpay_signature": "signature_hash",
+    "orderId": "order_123456789"
+  }'
+```
 
 ### Test Invoice Email Endpoint
 

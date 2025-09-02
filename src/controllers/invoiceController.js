@@ -30,16 +30,103 @@ router.get('/', (req, res) => {
  * GET /api/v1/invoices/:id
  * Get invoice by ID
  */
-router.get('/:id', (req, res) => {
-  const { id } = req.params;
-  
-  // TODO: Implement invoice retrieval by ID logic
-  res.json({
-    success: true,
-    message: `Get invoice ${id} - implement invoice retrieval logic`,
-    data: { id },
-    timestamp: new Date().toISOString()
-  });
+router.get('/:id', async (req, res) => {
+  try {
+    const invoiceId = req.params.id;
+
+    // TODO: Replace with your database logic
+    // For now, we'll simulate finding a student record
+    const mockStudent = {
+      id: "student_123",
+      invoiceLink: invoiceId,
+      paymentStatus: "COMPLETED",
+      invoiceNumber: "INV-2024-001",
+      createdAt: new Date("2024-01-15"),
+      programName: "Full Stack Development",
+      programPrice: 500,
+      programPriceINR: 50000,
+      programDuration: 6,
+      addonName: "Advanced React",
+      addonPrice: 100,
+      addonPriceINR: 10000,
+      subtotal: 600,
+      subtotalINR: 60000,
+      gstRate: 18,
+      gstAmount: 108,
+      gstAmountINR: 10800,
+      totalAmount: 708,
+      totalINR: 70800,
+      exchangeRateUsed: 100,
+      paymentMethod: "Razorpay",
+      paymentDate: new Date("2024-01-15"),
+      type: "program",
+      fullName: "John Doe",
+      email: "john.doe@example.com",
+      primaryPhone: "+91-9876543210",
+      residentialAddress: "123 Main Street",
+      city: "Mumbai",
+      state: "Maharashtra",
+      zipCode: "400001",
+      country: "India"
+    };
+
+    // Check if invoice exists and payment is completed
+    if (!mockStudent || mockStudent.paymentStatus !== "COMPLETED") {
+      return res.status(404).json({
+        success: false,
+        error: "Invoice not found or payment not completed",
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    res.json({
+      success: true,
+      invoice: {
+        id: mockStudent.id,
+        invoiceNumber: mockStudent.invoiceNumber,
+        createdAt: mockStudent.createdAt,
+        programName: mockStudent.programName,
+        programPrice: mockStudent.programPrice,
+        programPriceINR: mockStudent.programPriceINR,
+        programDuration: mockStudent.programDuration,
+        addonName: mockStudent.addonName,
+        addonPrice: mockStudent.addonPrice,
+        addonPriceINR: mockStudent.addonPriceINR,
+        subtotal: mockStudent.subtotal,
+        subtotalINR: mockStudent.subtotalINR,
+        gstRate: mockStudent.gstRate,
+        gstAmount: mockStudent.gstAmount,
+        gstAmountINR: mockStudent.gstAmountINR,
+        total: mockStudent.totalAmount,
+        totalINR: mockStudent.totalINR,
+        exchangeRate: mockStudent.exchangeRateUsed,
+        paymentStatus: mockStudent.paymentStatus,
+        paymentMethod: mockStudent.paymentMethod,
+        paymentDate: mockStudent.paymentDate,
+        type: mockStudent.type,
+      },
+      student: {
+        fullName: mockStudent.fullName,
+        email: mockStudent.email,
+        primaryPhone: mockStudent.primaryPhone,
+        residentialAddress: mockStudent.residentialAddress,
+        city: mockStudent.city,
+        state: mockStudent.state,
+        zipCode: mockStudent.zipCode,
+        country: mockStudent.country,
+      },
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error("Error fetching invoice:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch invoice",
+      details: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 /**
