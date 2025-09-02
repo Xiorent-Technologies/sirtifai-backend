@@ -1,0 +1,449 @@
+{
+  "programs": {
+    "skill-phase": {
+      "id": "skill-phase",
+      "name": "Skill Phase",
+      "description": "Foundation skills training with hands-on projects",
+      "category": "program",
+      "type": "monthly",
+      "monthlyOptions": "6-12",
+      "sacCode": "999293",
+      "priceEnvVar": "NEXT_PUBLIC_SKILL_PHASE_PRICE",
+      "price": 7199,
+      "features": [
+        "Core skill-building through structured modules",
+        "Hands-on projects to apply learned concepts",
+        "Peer reviews and mentor feedback on projects",
+        "Industry relevant projects"
+      ]
+    },
+    "practice-basic": {
+      "id": "practice-basic",
+      "name": "Practice Phase - Basic",
+      "description": "Basic practice projects and mentorship",
+      "category": "program",
+      "type": "monthly",
+      "monthlyOptions": "3-12",
+      "sacCode": "999293",
+      "priceEnvVar": "NEXT_PUBLIC_PRACTICE_BASIC_PRICE",
+      "price": 7199,
+      "features": [
+        "Access to basic-level practice projects",
+        "Group mentorship sessions",
+        "Project reviews and feedback"
+      ]
+    },
+    "practice-pro": {
+      "id": "practice-pro",
+      "name": "Practice Phase - Pro",
+      "description": "Advanced practice projects with industry mentorship",
+      "category": "program",
+      "type": "monthly",
+      "monthlyOptions": "3-12",
+      "sacCode": "999293",
+      "priceEnvVar": "NEXT_PUBLIC_PRACTICE_PRO_PRICE",
+      "price": 21999,
+      "features": [
+        "Advanced projects aligned with industry standards",
+        "1-on-1 sessions with industry mentors",
+        "Code reviews and optimization suggestions"
+      ]
+    },
+    "practice-elite": {
+      "id": "practice-elite",
+      "name": "Practice Phase - Elite",
+      "description": "Elite practice projects with 1-on-1 mentorship",
+      "category": "program",
+      "type": "monthly",
+      "monthlyOptions": "3-12",
+      "sacCode": "999293",
+      "priceEnvVar": "NEXT_PUBLIC_PRACTICE_ELITE_PRICE",
+      "price": 64999,
+      "features": [
+        "Exclusive elite-level project access",
+        "Personalized 1-on-1 weekly mentorship",
+        "Career-aligned feedback and project guidance"
+      ]
+    },
+    "progress-basic": {
+      "id": "progress-basic",
+      "name": "Progress Phase - Basic",
+      "description": "Career progression with basic support",
+      "category": "program",
+      "type": "monthly",
+      "monthlyOptions": "1-12",
+      "sacCode": "999293",
+      "priceEnvVar": "NEXT_PUBLIC_PROGRESS_BASIC_PRICE",
+      "price": 199999,
+      "features": [
+        "Guided job search strategies",
+        "Resume and profile building support",
+        "Weekly progress tracking and check-ins"
+      ]
+    },
+    "progress-pro": {
+      "id": "progress-pro",
+      "name": "Progress Phase - Pro",
+      "description": "Advanced career progression with pro support",
+      "category": "program",
+      "type": "monthly",
+      "monthlyOptions": "1-12",
+      "sacCode": "999293",
+      "priceEnvVar": "NEXT_PUBLIC_PROGRESS_PRO_PRICE",
+      "price": 299999,
+      "features": [
+        "Dedicated career coach support",
+        "Customized job application strategies",
+        "Networking and referral guidance"
+      ]
+    },
+    "progress-elite": {
+      "id": "progress-elite",
+      "name": "Progress Phase - Elite",
+      "description": "Elite career progression with premium support",
+      "category": "program",
+      "type": "monthly",
+      "monthlyOptions": "1-12",
+      "sacCode": "999293",
+      "priceEnvVar": "NEXT_PUBLIC_PROGRESS_ELITE_PRICE",
+      "price": 599999,
+      "features": [
+        "Premium 1-on-1 career mentorship",
+        "Interview coaching and mock sessions",
+        "End-to-end job offer negotiation support"
+      ]
+    }
+  },
+  "programAddons": {
+  "payroll-payroll-epf": {
+    "id": "payroll-payroll-epf",
+    "name": "Payroll + EPF Services",
+    "description": "Complete payroll management, EPF compliance, tax calculations, automated payments",
+    "category": "program-addon",
+    "type": "monthly",
+    "sacCode": "998596",
+    "priceEnvVar": "NEXT_PUBLIC_PAYROLL_EPF_PRICE",
+    "price": 47.2,
+    "features": [
+      "Payroll processing and salary disbursal",
+      "EPF compliance and monthly filings",
+      "Tax calculation and deduction tracking",
+      "Automated payments and payslip generation"
+    ]
+  },
+  "payroll-tax-filing": {
+    "id": "payroll-tax-filing",
+    "name": "Tax Filing Support",
+    "description": "Professional tax filing assistance and compliance support",
+    "category": "program-addon",
+    "type": "monthly",
+    "sacCode": "998596",
+    "priceEnvVar": "NEXT_PUBLIC_TAX_FILING_SUPPORT_PRICE",
+    "price": 35,
+    "features": [
+      "Personal and business tax filing assistance",
+      "Support with ITR forms and documentation",
+      "Compliance tracking and alerts",
+      "Expert help via email and phone"
+    ]
+  },
+
+  "ca-freelancer-basic": {
+    "id": "ca-freelancer-basic",
+    "name": "Freelancer Basic Package",
+    "description": "Essential freelancing tools and basic templates",
+    "category": "program-addon",
+    "type": "monthly",
+    "sacCode": "998596",
+    "priceEnvVar": "NEXT_PUBLIC_CA_BASIC_PACKAGE_PRICE",
+    "price": 49,
+    "features": [
+      "Invoice and contract templates",
+      "Basic accounting sheet templates",
+      "Access to essential legal documents",
+      "Freelancing starter kit"
+    ]
+  },
+  "ca-freelancer-pro": {
+    "id": "ca-freelancer-pro",
+    "name": "Freelancer Pro Package",
+    "description": "Advanced freelancing tools, premium templates, client management pro, marketing resources",
+    "category": "program-addon",
+    "type": "monthly",
+    "sacCode": "998596",
+    "priceEnvVar": "NEXT_PUBLIC_CA_PRO_PACKAGE_PRICE",
+    "price": 68,
+    "features": [
+      "Advanced financial and legal templates",
+      "Client onboarding and communication tools",
+      "Marketing and branding resources",
+      "Priority email support"
+    ]
+  },
+  "ca-freelancer-elite": {
+    "id": "ca-freelancer-elite",
+    "name": "Freelancer Elite Package",
+    "description": "Complete freelancing suite with advanced tools and premium support",
+    "category": "program-addon",
+    "type": "monthly",
+    "sacCode": "998596",
+    "priceEnvVar": "NEXT_PUBLIC_CA_ELITE_PACKAGE_PRICE",
+    "price": 99,
+    "features": [
+      "All Pro features included",
+      "Dedicated CA consultation hours monthly",
+      "Premium support with faster turnaround",
+      "Client success and lead generation tools"
+    ]
+  },
+
+  "legal-legal-support": {
+    "id": "legal-legal-support",
+    "name": "Legal Support",
+    "description": "Contract templates, legal consultation, and compliance guidance",
+    "category": "program-addon",
+    "type": "monthly",
+    "sacCode": "998596",
+    "priceEnvVar": "NEXT_PUBLIC_LEGAL_SUPPORT_PRICE",
+    "price": 42,
+    "features": [
+      "Customizable contract templates",
+      "Monthly legal consultation sessions",
+      "Compliance and regulatory guidance",
+      "Email support for legal questions"
+    ]
+  },
+  "legal-business-setup": {
+    "id": "legal-business-setup",
+    "name": "Business Setup Assistance",
+    "description": "Company registration, GST setup, and business compliance support",
+    "category": "program-addon",
+    "type": "monthly",
+    "sacCode": "998596",
+    "priceEnvVar": "NEXT_PUBLIC_BUSINESS_SETUP_PRICE",
+    "price": 55,
+    "features": [
+      "Private Limited or sole proprietorship registration",
+      "GST registration and filing guidance",
+      "Help with PAN/TAN, Udyam, and other docs",
+      "Business compliance checklist support"
+    ]
+  }
+  },
+  "freelancer": {
+    "freelancer-basic": {
+      "id": "freelancer-basic",
+      "name": "Freelancer Basic Package",
+      "description": "Essential freelancing tools and basic templates",
+      "category": "freelancer",
+      "type": "one-time",
+      "sacCode": "999293",
+      "priceEnvVar": "NEXT_PUBLIC_FREELANCER_BASIC_PRICE",
+      "price": 15000 ,
+      "features": [
+        "Access to essential freelancing tools for day-to-day operations",
+        "Basic contract and invoice templates",
+        "Starter guide for client communication and project setup"
+      ]
+    },
+    "freelancer-pro": {
+      "id": "freelancer-pro",
+      "name": "Freelancer Pro Package",
+      "description": "Advanced freelancing tools, premium templates, client management pro, marketing resources",
+      "category": "freelancer",
+      "type": "one-time",
+      "sacCode": "999293",
+      "priceEnvVar": "NEXT_PUBLIC_FREELANCER_PRO_PRICE",
+      "price": 31860 ,
+      "features": [
+        "Advanced freelancing tools including time tracking and proposal builder",
+        "Premium templates for contracts, proposals, and invoices",
+        "Client management tools and access to marketing resources"
+      ]
+    },
+    "freelancer-elite": {
+      "id": "freelancer-elite",
+      "name": "Freelancer Elite Package",
+      "description": "Complete freelancing suite with advanced tools and premium support",
+      "category": "freelancer",
+      "type": "one-time",
+      "sacCode": "999293",
+      "priceEnvVar": "NEXT_PUBLIC_FREELANCER_ELITE_PRICE",
+      "price": 70800 ,
+      "features": [
+        "Complete suite including all Pro tools plus financial tracking and CRM integration",
+        "Priority support and access to legal & business experts",
+        "Exclusive access to advanced growth tools and freelancing community"
+      ]
+    }
+  },
+ "freelancerAddons": {
+    "payroll-epf": {
+      "id": "payroll-epf",
+      "name": "Payroll + EPF Services",
+      "description": "Complete payroll management, EPF compliance, tax calculations, automated payments",
+      "category": "freelancer-addon",
+      "type": "one-time",
+      "sacCode": "998596",
+      "priceEnvVar": "NEXT_PUBLIC_PAYROLL_EPF_PRICE",
+      "price": 47.2,
+      "features": [
+        "Automated payroll processing for accurate and timely employee payments",
+        "EPF (Employees' Provident Fund) compliance and contributions management",
+        "Monthly tax calculation and TDS deductions with payment automation"
+      ]
+    },
+    "tax-filing": {
+      "id": "tax-filing",
+      "name": "Tax Filing Support",
+      "description": "Professional tax filing assistance and compliance support",
+      "category": "freelancer-addon",
+      "type": "one-time",
+      "sacCode": "998596",
+      "priceEnvVar": "NEXT_PUBLIC_TAX_FILING_PRICE",
+      "price": 35,
+      "features": [
+        "End-to-end support for income tax return (ITR) filing",
+        "Review and optimization of deductions and exemptions",
+        "Assistance with tax notices, queries, and compliance updates"
+      ]
+    },
+    "legal-support": {
+      "id": "legal-support",
+      "name": "Legal Support",
+      "description": "Contract templates, legal consultation, and compliance guidance",
+      "category": "freelancer-addon",
+      "type": "one-time",
+      "sacCode": "998596",
+      "priceEnvVar": "NEXT_PUBLIC_LEGAL_SUPPORT_PRICE",
+      "price": 42,
+      "features": [
+        "Access to standard legal contract templates (NDA, service agreements, etc.)",
+        "One-on-one legal consultation for business matters",
+        "Guidance on compliance, risk mitigation, and intellectual property protection"
+      ]
+    },
+    "business-setup": {
+      "id": "business-setup",
+      "name": "Business Setup Assistance",
+      "description": "Company registration, GST setup, and business compliance support",
+      "category": "freelancer-addon",
+      "type": "one-time",
+      "sacCode": "998596",
+      "priceEnvVar": "NEXT_PUBLIC_BUSINESS_SETUP_PRICE",
+      "price": 55,
+      "features": [
+        "Company or sole proprietorship registration (GST, PAN, etc.)",
+        "Assistance with obtaining business licenses and permits",
+        "Compliance checklist and documentation setup for new businesses"
+      ]
+    }
+  },
+  "international": {
+  "international-basic": {
+    "id": "international-basic",
+    "name": "International Basic Plan",
+    "description": "Essential support for your international career journey",
+    "category": "international",
+    "type": "one-time",
+    "sacCode": "999293",
+    "priceEnvVar": "NEXT_PUBLIC_INTERNATIONAL_BASIC_PRICE",
+    "price": 79999,
+    "features": [
+      "Complete skill development program",
+      "Practice phase with real projects",
+      "NSQF certification",
+      "Basic international resume preparation",
+      "Job application guidance"
+    ]
+  },
+  "international-pro": {
+    "id": "international-pro",
+    "name": "International Pro Plan",
+    "description": "Enhanced support with job sourcing and interview preparation",
+    "category": "international",
+    "type": "one-time",
+    "sacCode": "999293",
+    "priceEnvVar": "NEXT_PUBLIC_INTERNATIONAL_PRO_PRICE",
+    "price": 212999,
+    "features": [
+      "Everything in Basic plan",
+      "Advanced portfolio development",
+      "Direct job sourcing with partners",
+      "Interview preparation with industry experts",
+      "Cultural training for target countries",
+      "Basic visa application guidance"
+    ]
+  },
+  "international-elite": {
+    "id": "international-elite",
+    "name": "International Elite Plan",
+    "description": "Comprehensive support from training to relocation",
+    "category": "international",
+    "type": "one-time",
+    "sacCode": "999293",
+    "priceEnvVar": "NEXT_PUBLIC_INTERNATIONAL_ELITE_PRICE",
+    "price": 637999,
+    "features": [
+      "Everything in Pro plan",
+      "Premium job sourcing with direct employer connections",
+      "Complete visa support package",
+      "Legal documentation assistance",
+      "Relocation support services",
+      "Dedicated international placement manager",
+      "6-month post-placement support",
+      "Visa and Immigration support and Assign RM until they settle in represent country",
+      "4 Months additional Resume Booster with mentor and Workshops "
+    ]
+  }
+  },
+  "internationalAddons": {
+  "international-global-payroll": {
+    "id": "international-global-payroll",
+    "name": "Global Payroll",
+    "description": "International payroll setup and tax optimization for your global income.",
+    "category": "program-addon",
+    "type": "one-time",
+    "sacCode": "998596",
+    "priceEnvVar": "NEXT_PUBLIC_GLOBAL_PAYROLL_PRICE",
+    "price": 180,
+    "features": [
+      "International bank account setup",
+      "Tax optimization guidance",
+      "Remittance support"
+    ]
+  },
+  "international-ca-visa": {
+    "id": "international-ca-visa",
+    "name": "CA for Visa",
+    "description": "Chartered Accountant services for financial documentation required for visa applications.",
+    "category": "program-addon",
+    "type": "one-time",
+    "sacCode": "998596",
+    "priceEnvVar": "NEXT_PUBLIC_CA_FOR_VISA_PRICE",
+    "price": 144,
+    "features": [
+      "Financial documents preparation",
+      "Income verification",
+      "Tax compliance certification"
+    ]
+  },
+  "international-legal-pack": {
+    "id": "international-legal-pack",
+    "name": "Legal Pack",
+    "description": "Legal assistance for international contracts, work permits, and immigration matters.",
+    "category": "program-addon",
+    "type": "one-time",
+    "sacCode": "998596",
+    "priceEnvVar": "NEXT_PUBLIC_LEGAL_PACK_PRICE",
+    "price": 240,
+    "features": [
+      "Contract review",
+      "Legal documentation support",
+      "Immigration attorney consultation"
+    ]
+  }
+}
+
+
+}

@@ -1,6 +1,8 @@
 import express from 'express';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import Student from '../models/Student.js'; // adjust path as needed
+import {  PAYMENT_STATUS } from '../config/constants.js';
 
 // Load environment variables
 dotenv.config();
@@ -33,45 +35,12 @@ router.get('/', (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const invoiceId = req.params.id;
+    // console.log("Fetching invoice with ID:", invoiceId);
 
-    // TODO: Replace with your database logic
-    // For now, we'll simulate finding a student record
-    const mockStudent = {
-      id: "student_123",
-      invoiceLink: invoiceId,
-      paymentStatus: "COMPLETED",
-      invoiceNumber: "INV-2024-001",
-      createdAt: new Date("2024-01-15"),
-      programName: "Full Stack Development",
-      programPrice: 500,
-      programPriceINR: 50000,
-      programDuration: 6,
-      addonName: "Advanced React",
-      addonPrice: 100,
-      addonPriceINR: 10000,
-      subtotal: 600,
-      subtotalINR: 60000,
-      gstRate: 18,
-      gstAmount: 108,
-      gstAmountINR: 10800,
-      totalAmount: 708,
-      totalINR: 70800,
-      exchangeRateUsed: 100,
-      paymentMethod: "Razorpay",
-      paymentDate: new Date("2024-01-15"),
-      type: "program",
-      fullName: "John Doe",
-      email: "john.doe@example.com",
-      primaryPhone: "+91-9876543210",
-      residentialAddress: "123 Main Street",
-      city: "Mumbai",
-      state: "Maharashtra",
-      zipCode: "400001",
-      country: "India"
-    };
-
-    // Check if invoice exists and payment is completed
-    if (!mockStudent || mockStudent.paymentStatus !== "COMPLETED") {
+    // Find student by invoiceLink (or _id if that's what you want)
+    const student = await Student.findOne({ invoiceLink: invoiceId }).lean();
+    // console.log(student.paymentStatus)
+    if (!student || student.paymentStatus !== PAYMENT_STATUS.SUCCESS) {
       return res.status(404).json({
         success: false,
         error: "Invoice not found or payment not completed",
@@ -79,41 +48,46 @@ router.get('/:id', async (req, res) => {
       });
     }
 
+    // Build invoice response
     res.json({
       success: true,
       invoice: {
-        id: mockStudent.id,
-        invoiceNumber: mockStudent.invoiceNumber,
-        createdAt: mockStudent.createdAt,
-        programName: mockStudent.programName,
-        programPrice: mockStudent.programPrice,
-        programPriceINR: mockStudent.programPriceINR,
-        programDuration: mockStudent.programDuration,
-        addonName: mockStudent.addonName,
-        addonPrice: mockStudent.addonPrice,
-        addonPriceINR: mockStudent.addonPriceINR,
-        subtotal: mockStudent.subtotal,
-        subtotalINR: mockStudent.subtotalINR,
-        gstRate: mockStudent.gstRate,
-        gstAmount: mockStudent.gstAmount,
-        gstAmountINR: mockStudent.gstAmountINR,
-        total: mockStudent.totalAmount,
-        totalINR: mockStudent.totalINR,
-        exchangeRate: mockStudent.exchangeRateUsed,
-        paymentStatus: mockStudent.paymentStatus,
-        paymentMethod: mockStudent.paymentMethod,
-        paymentDate: mockStudent.paymentDate,
-        type: mockStudent.type,
+        id: student._id,
+        invoiceNumber: student.invoiceNumber,
+        createdAt: student.createdAt,
+        programName: student.programName,
+        programPriceINR: student.programPriceINR,
+        programDuration: student.programDuration,
+        selectedAddonNames: student.selectedAddonNames,
+        addonPriceINR: student.addonPriceINR,
+        subtotalINR: student.subtotalINR,
+        gstRate: student.gstRate,
+        gstAmountINR: student.gstAmountINR,
+        totalINR: student.totalINR,
+        paymentStatus: student.paymentStatus,
+        paymentMethod: student.paymentMethod || "Razorpay",
+        paymentDate: student.paymentDate || student.createdAt,
+        type: student.programType,
       },
       student: {
-        fullName: mockStudent.fullName,
-        email: mockStudent.email,
-        primaryPhone: mockStudent.primaryPhone,
-        residentialAddress: mockStudent.residentialAddress,
-        city: mockStudent.city,
-        state: mockStudent.state,
-        zipCode: mockStudent.zipCode,
-        country: mockStudent.country,
+        fullName: student.fullName,
+        email: student.email,
+        primaryPhone: student.primaryPhone,
+        secondaryPhone: student.secondaryPhone,
+        whatsappNotifications: student.whatsappNotifications,
+        residentialAddress: student.residentialAddress,
+        city: student.city,
+        state: student.state,
+        zipCode: student.zipCode,
+        country: student.country,
+        dateOfBirth: student.dateOfBirth,
+        highestQualification: student.highestQualification,
+        specialization: student.specialization,
+        currentProfession: student.currentProfession,
+        currentOrganization: student.currentOrganization,
+        linkedinProfile: student.linkedinProfile,
+        idType: student.idType,
+        idNumber: student.idNumber,
       },
       timestamp: new Date().toISOString()
     });
@@ -128,6 +102,7 @@ router.get('/:id', async (req, res) => {
     });
   }
 });
+
 
 /**
  * POST /api/v1/invoices
@@ -149,15 +124,27 @@ router.post('/', (req, res) => {
  * POST /api/v1/invoices/send
  * Send invoice via email
  */
+
+
 router.post('/send', async (req, res) => {
   try {
-    const { studentEmail, studentName, invoiceLink, invoiceData } = req.body;
+    const { studentEmail, invoiceLink } = req.body;
 
     // Validate required fields
-    if (!studentEmail || !studentName || !invoiceLink || !invoiceData) {
+    if (!studentEmail || !invoiceLink) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields: studentEmail, studentName, invoiceLink, invoiceData'
+        error: 'Missing required fields: studentEmail, invoiceLink'
+      });
+    }
+
+    // Fetch student by invoiceLink
+    const student = await Student.findOne({ invoiceLink }).lean();
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        error: 'Invoice not found'
       });
     }
 
@@ -171,14 +158,14 @@ router.post('/send', async (req, res) => {
     });
 
     // Generate invoice URL
-    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-    const invoiceUrl = `${baseUrl}/invoice/${invoiceLink}`;
+    const baseUrl = process.env.BASE_URL || 'http://localhost:8000';
+    const invoiceUrl = `${process.env.FRONTEND_URL}/invoice/${invoiceLink}`;
 
     // Email template
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: studentEmail,
-      subject: `Invoice ${invoiceData.invoiceNumber} - SIRTIFAI Programme`,
+      subject: `Invoice ${student.invoiceNumber} - SIRTIFAI Programme`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background-color: #FC4C03; color: white; padding: 20px; text-align: center;">
@@ -187,19 +174,19 @@ router.post('/send', async (req, res) => {
           </div>
           
           <div style="padding: 20px; background-color: #f9f9f9;">
-            <p>Dear ${studentName},</p>
+            <p>Dear ${student.fullName},</p>
             
             <p>Thank you for your payment! Your enrollment has been confirmed.</p>
             
             <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 20px 0;">
               <h3>Payment Details:</h3>
-              <p><strong>Invoice Number:</strong> ${invoiceData.invoiceNumber}</p>
-              <p><strong>Program:</strong> ${invoiceData.programName}</p>
-              <p><strong>Duration:</strong> ${invoiceData.duration} months</p>
-              ${invoiceData.addonName ? `<p><strong>Add-on:</strong> ${invoiceData.addonName}</p>` : ''}
-              <p><strong>Total Amount:</strong> ₹${invoiceData.total.toLocaleString()}</p>
-              <p><strong>Payment Status:</strong> ${invoiceData.paymentStatus}</p>
-              <p><strong>Payment Date:</strong> ${new Date(invoiceData.paymentDate).toLocaleDateString()}</p>
+              <p><strong>Invoice Number:</strong> ${student.invoiceNumber}</p>
+              <p><strong>Program:</strong> ${student.programName}</p>
+              <p><strong>Duration:</strong> ${student.programDuration} months</p>
+
+              <p><strong>Total Amount:</strong> ₹${student.totalINR.toLocaleString()}</p>
+              <p><strong>Payment Status:</strong> ${student.paymentStatus}</p>
+              <p><strong>Payment Date:</strong> ${new Date(student.paymentDate || student.createdAt).toLocaleDateString()}</p>
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
@@ -207,16 +194,13 @@ router.post('/send', async (req, res) => {
             </div>
             
             <p>You can access your invoice anytime using the link above.</p>
-            
             <p>You will receive further instructions about your program shortly.</p>
-            
             <p>If you have any questions, please contact us at support@sirtifai.com</p>
-            
             <p>Best regards,<br>The SIRTIFAI Team</p>
           </div>
           
           <div style="background-color: #333; color: white; padding: 10px; text-align: center; font-size: 12px;">
-            <p>&copy; 2023 SIRTIFAI. All rights reserved.</p>
+            <p>&copy; ${new Date().getFullYear()} SIRTIFAI. All rights reserved.</p>
           </div>
         </div>
       `,
@@ -230,7 +214,7 @@ router.post('/send', async (req, res) => {
       message: 'Invoice email sent successfully',
       data: {
         studentEmail,
-        invoiceNumber: invoiceData.invoiceNumber,
+        invoiceNumber: student.invoiceNumber,
         invoiceUrl
       },
       timestamp: new Date().toISOString()

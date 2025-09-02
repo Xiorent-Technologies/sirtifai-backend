@@ -16,7 +16,9 @@ console.log("Hello World");
 connectDB().catch(console.error);
 
 // Middleware
-app.use(express.json());
+app.use(express.json({ limit: '5mb' })); // or '10mb', adjust as needed
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+
 app.use(cors());
 
 // Serve uploaded files statically

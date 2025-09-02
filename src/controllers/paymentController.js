@@ -3,6 +3,9 @@ import crypto from 'crypto';
 import dotenv from 'dotenv';
 import Razorpay from 'razorpay';
 import { v4 as uuidv4 } from 'uuid';
+import {getProductById} from "../utils/products.js"
+import Student from '../models/Student.js';
+import { STUDENT_STATUS, PAYMENT_STATUS } from '../config/constants.js';
 
 // Load environment variables
 dotenv.config();
@@ -20,23 +23,6 @@ function generateInvoiceNumber() {
   return `SRT/INT/${dateStr}/${randomNum}`;
 }
 
-// Mock product data (replace with your actual product service)
-function getProductById(productId) {
-  const products = {
-    'fullstack': {
-      id: 'fullstack',
-      name: 'Full Stack Development',
-      basePrice: 500
-    },
-    'react': {
-      id: 'react',
-      name: 'Advanced React',
-      basePrice: 100
-    }
-  };
-  return products[productId] || null;
-}
-
 // Mock currency conversion (replace with your actual currency service)
 async function getINRToUSDRate() {
   // Mock rate - replace with actual API call
@@ -47,19 +33,57 @@ function convertUSDToINR(usdAmount, inrToUsdRate) {
   return usdAmount / inrToUsdRate;
 }
 
-function createStandardizedPackageData(packageType, selectedProduct, selectedAddon, duration) {
-  const product = getProductById(selectedProduct);
-  const addon = selectedAddon ? getProductById(selectedAddon) : null;
-  
-  const programPrice = product ? product.basePrice * duration : 0;
-  const addonPrice = addon ? addon.basePrice : 0;
-  const subtotal = programPrice + addonPrice;
-  
+// Updated function to handle multiple addons
+async function createStandardizedPackageData(selectedProductType, selectedProduct, selectedAddons, duration) {
+  console.log("Creating standardized package data...", { selectedProductType, selectedProduct, selectedAddons, duration });
+
+  // Get the main product
+  const product = await getProductById(selectedProductType, selectedProduct);
+  if (!product) {
+    throw new Error(`Product not found: ${selectedProductType} / ${selectedProduct}`);
+  }
+
+  // Determine corresponding addon type based on selectedProductType
+  const addonTypeMap = {
+    programs: 'programAddons',
+    freelancer: 'freelancerAddons',
+    international: 'internationalAddons'
+  };
+
+  const selectedAddonType = addonTypeMap[selectedProductType];
+  if (!selectedAddonType) {
+    throw new Error(`Unknown addon type for: ${selectedProductType}`);
+  }
+
+  // Handle multiple addons
+  let addonsData = [];
+  let totalAddonPrice = 0;
+
+  if (Array.isArray(selectedAddons) && selectedAddons.length > 0) {
+    for (const addonId of selectedAddons) {
+      const addon = await getProductById(selectedAddonType, addonId);
+      if (addon) {
+        addonsData.push(addon);
+        totalAddonPrice += addon.price || 0; // Use `price` not `basePrice`
+      }
+    }
+  }
+
+  // Calculate pricing
+  const programPrice = product.type === 'monthly' ? product.price * duration : product.price;
+  const subtotal = programPrice + totalAddonPrice;
+
   return {
+    type: selectedProductType,
+    selectedProduct,
+    selectedAddons,
+    productData: product,
+    addonsData,
     pricing: {
       programPrice,
-      addonPrice,
-      subtotal
+      addonPrice: totalAddonPrice,
+      subtotal,
+      total: subtotal // GST is already included, based on your earlier note
     }
   };
 }
@@ -142,13 +166,12 @@ router.post('/create-order', async (req, res) => {
     }
 
     const selectedProduct = packageData?.selectedProduct || packageData?.selectedProgram;
-    const selectedAddon = packageData?.selectedAddon;
+    const selectedProductType = packageData?.type;
+    const selectedAddons = packageData?.selectedAddon || []; 
     const duration = packageData?.productData?.duration || packageData?.selectedMonths || 1;
-    const packageType = packageData?.type || 'program';
 
     // Get product details
-    const product = getProductById(selectedProduct);
-    const addon = selectedAddon ? getProductById(selectedAddon) : null;
+    const product = await getProductById(selectedProductType, selectedProduct);
 
     if (!product) {
       console.error('Product not found for ID:', selectedProduct);
@@ -159,19 +182,33 @@ router.post('/create-order', async (req, res) => {
       });
     }
 
-    // Calculate pricing
-    const standardizedData = createStandardizedPackageData(packageType, selectedProduct, selectedAddon, duration);
+    // Calculate pricing (all in INR now)
+    const standardizedData = await createStandardizedPackageData(
+      selectedProductType,
+      selectedProduct,
+      selectedAddons,
+      duration
+    );
 
-    const programPriceUSD = standardizedData.pricing.programPrice;
-    const addOnPriceUSD = standardizedData.pricing.addonPrice;
-    const subtotalUSD = standardizedData.pricing.subtotal;
+    const programPriceINR = standardizedData.pricing.programPrice;
+    const addonPriceINR = standardizedData.pricing.addonPrice;
+    const subtotalINR = standardizedData.pricing.subtotal;
+    const addonsData = standardizedData.addonsData;
 
-    if (isNaN(programPriceUSD) || isNaN(subtotalUSD)) {
+    console.log('Calculated pricing (INR):', {
+      programPriceINR,
+      addonPriceINR,
+      subtotalINR,
+      duration,
+      addonsData
+    });
+
+    if (isNaN(programPriceINR) || isNaN(subtotalINR)) {
       console.error('Invalid pricing calculation:', {
-        programPriceUSD,
+        programPriceINR,
         duration,
-        addOnPriceUSD,
-        subtotalUSD,
+        addonPriceINR,
+        subtotalINR,
       });
       return res.status(400).json({
         success: false,
@@ -180,15 +217,8 @@ router.post('/create-order', async (req, res) => {
       });
     }
 
-    // Currency conversion
-    const inrToUsdRate = await getINRToUSDRate();
-    const usdToInrRate = 1 / inrToUsdRate;
-    const subtotalINR = convertUSDToINR(subtotalUSD, inrToUsdRate);
-    const gstAmount = subtotalINR * GST_RATE;
-    const totalAmountINR = subtotalINR + gstAmount;
-
-    const programPriceINR = convertUSDToINR(programPriceUSD, inrToUsdRate);
-    const addonPriceINR = addOnPriceUSD ? convertUSDToINR(addOnPriceUSD, inrToUsdRate) : null;
+    // Final INR amount (GST can be added if needed)
+    const totalAmountINR = subtotalINR;
 
     // Create Razorpay order
     const options = {
@@ -244,10 +274,12 @@ router.post('/create-order', async (req, res) => {
       }
     }
 
-    // TODO: Replace with your database logic
-    // For now, we'll simulate creating a student record
-    const mockStudent = {
-      id: `student_${Date.now()}`,
+    // Prepare addon names for storage
+    const addonNames = addonsData.map(addon => addon.name).join(', ');
+    const selectedAddonIds = Array.isArray(selectedAddons) ? selectedAddons : (selectedAddons ? [selectedAddons] : []);
+
+    // Mock Student Record (replace with DB save)
+        const newStudent = new Student({
       // Personal Details
       fullName: studentData.fullName,
       dateOfBirth: parsedDateOfBirth,
@@ -277,70 +309,77 @@ router.post('/create-order', async (req, res) => {
       // Identity Document
       idType: studentData.idType,
       idNumber: studentData.idNumber,
+      idDocumentBase64: studentData.idDocumentBase64 || null,
+      idDocumentName: studentData.idDocumentName || null,
+      idDocumentType: studentData.idDocumentType || null,
+      
+      // Student Photo
+      studentPhotoBase64: studentData.studentPhotoBase64 || null,
+      studentPhotoName: studentData.studentPhotoName || null,
+      studentPhotoType: studentData.studentPhotoType || null,
 
-      // Program Selection
-      type: packageType,
-      selectedProgram: selectedProduct,
+      // Program Selection & Pricing
+      programType: selectedProductType,
+      selectedProgram: selectedProduct, // This should be ObjectId
+      programName: product.name,
       programDuration: duration,
-      programPrice: programPriceUSD,
-      selectedAddon: selectedAddon || null,
-      addonPrice: addOnPriceUSD || null,
+      programPriceINR,
+      selectedAddons: selectedAddonIds, // Array of ObjectIds
+      selectedAddonNames: addonNames,
+      addonPriceINR,
+      addonsData, // Full addon data with prices
 
       // Invoice Details
       invoiceNumber,
-      programName: product.name,
-      addonName: addon?.name || null,
-      subtotal: subtotalUSD,
-      gstRate: GST_RATE * 100, // Store as percentage
-      gstAmount: subtotalUSD * GST_RATE, // GST in USD
-      totalAmount: subtotalUSD * (1 + GST_RATE), // Total in USD
-
-      // INR Calculations
-      exchangeRateUsed: usdToInrRate,
-      programPriceINR,
-      addonPriceINR,
       subtotalINR,
-      gstAmountINR: gstAmount,
-      totalINR: totalAmountINR,
+      gstRate: GST_RATE * 100, 
+      gstAmountINR: subtotalINR * GST_RATE,
+      totalINR: subtotalINR * (1 + GST_RATE),
 
       // Payment Details
-      paymentStatus: 'PROCESSING',
+      paymentStatus: PAYMENT_STATUS.PROCESSING, // Use constant instead of string
       razorpayOrderId: order.id,
       invoiceLink,
 
       // Confirmation
       agreedToTerms: studentData.agreedToTerms || false,
       certifiedInformation: studentData.certifiedInformation || false,
-    };
+
+      // Additional fields (optional)
+      status: STUDENT_STATUS.PENDING,
+      registrationSource: 'WEBSITE', // or whatever source
+    });
+
+
+    const savedStudent = await newStudent.save();
+    
+    console.log('Student created successfully:', savedStudent.studentId);
+    // return savedStudent;
+
 
     console.log('Student record created successfully:', {
-      studentId: mockStudent.id,
+      studentId: savedStudent.studentId,
       orderId: order.id,
       invoiceNumber,
       programName: product.name,
-      addonName: addon?.name,
+      addonNames: addonNames,
+      selectedAddons: selectedAddonIds,
       totalAmountINR,
     });
 
     res.json({
       success: true,
       ...order,
-      studentId: mockStudent.id,
+      studentId: savedStudent.studentId,
       invoiceLink,
       pricing: {
-        programPriceUSD,
-        totalProgramPriceUSD: programPriceUSD,
-        addOnPriceUSD,
-        subtotalUSD,
+        programPriceINR,
+        addonPriceINR,
         subtotalINR,
-        gstAmount,
-        totalAmountUSD: subtotalUSD * (1 + GST_RATE),
-        totalAmountINR: totalAmountINR,
-        duration: duration,
-        exchangeRate: {
-          inrToUsd: inrToUsdRate,
-          usdToInr: usdToInrRate,
-        },
+        gstAmountINR: subtotalINR * GST_RATE,
+        totalAmountINR: subtotalINR * (1 + GST_RATE),
+        duration,
+        addonsData,
       },
       timestamp: new Date().toISOString()
     });
@@ -355,6 +394,8 @@ router.post('/create-order', async (req, res) => {
     });
   }
 });
+
+
 
 /**
  * PUT /api/v1/payments/:id
@@ -411,101 +452,158 @@ router.post('/verify', async (req, res) => {
 
     const isSignatureValid = expectedSignature === razorpay_signature;
 
-    if (isSignatureValid) {
-      console.log("Signature verification successful");
-
-      // TODO: Replace with your database logic
-      // For now, we'll simulate finding and updating a student record
-      const mockStudent = {
-        id: "student_123",
-        email: "student@example.com",
-        fullName: "John Doe",
-        invoiceLink: "INV-2024-001",
-        invoiceNumber: "INV-2024-001",
-        programName: "Full Stack Development",
-        programDuration: 6,
-        addonName: "Advanced React",
-        totalINR: 50000,
-        paymentDate: new Date(),
-        razorpayOrderId: razorpay_order_id,
-        paymentStatus: "PROCESSING"
-      };
-
-      // Simulate database update
-      const updatedStudent = {
-        ...mockStudent,
-        paymentId: razorpay_payment_id,
-        paymentStatus: "COMPLETED",
-        paymentMethod: "Razorpay",
-        paymentDate: new Date(),
-        razorpayPaymentId: razorpay_payment_id,
-        razorpaySignature: razorpay_signature,
-      };
-
-      console.log("Payment completed successfully");
-
-      // Send invoice email
-      try {
-        const baseUrl = process.env.BASE_URL || "http://localhost:3000";
-        
-        const emailResponse = await fetch(`${baseUrl}/api/v1/invoices/send`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            studentEmail: updatedStudent.email,
-            studentName: updatedStudent.fullName,
-            invoiceLink: updatedStudent.invoiceLink,
-            invoiceData: {
-              invoiceNumber: updatedStudent.invoiceNumber,
-              programName: updatedStudent.programName,
-              duration: updatedStudent.programDuration,
-              addonName: updatedStudent.addonName,
-              total: updatedStudent.totalINR,
-              paymentStatus: "Completed",
-              paymentDate: updatedStudent.paymentDate,
-            },
-          }),
-        });
-
-        if (emailResponse.ok) {
-          console.log("Invoice email sent successfully");
-        } else {
-          console.error("Failed to send invoice email:", await emailResponse.text());
-        }
-      } catch (emailError) {
-        console.error("Error sending invoice email:", emailError);
-      }
-
-      res.json({
-        success: true,
-        paymentId: razorpay_payment_id,
-        orderId: razorpay_order_id,
-        invoiceId: updatedStudent.invoiceLink,
-        studentId: updatedStudent.id,
-        invoiceLink: updatedStudent.invoiceLink,
-        timestamp: new Date().toISOString()
-      });
-
-    } else {
+    if (!isSignatureValid) {
       console.log("Signature verification failed - payment remains PROCESSING");
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         error: "Invalid signature",
         timestamp: new Date().toISOString()
       });
     }
 
+    console.log("Signature verification successful");
+
+    // Find student by Razorpay order ID
+    const student = await Student.findByRazorpayOrderId(razorpay_order_id);
+    
+    if (!student) {
+      console.error("Student not found for order ID:", razorpay_order_id);
+      return res.status(404).json({
+        success: false,
+        error: "Student record not found for this order",
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    console.log("Found student:", student.studentId, student.email);
+
+    // Check if payment is already processed
+    if (student.paymentStatus === PAYMENT_STATUS.SUCCESS) {
+      console.log("Payment already processed for student:", student.studentId);
+      return res.json({
+        success: true,
+        message: "Payment already processed",
+        paymentId: student.razorpayPaymentId,
+        orderId: razorpay_order_id,
+        invoiceId: student.invoiceLink,
+        studentId: student.studentId,
+        invoiceLink: student.invoiceLink,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Start database transaction (if using MongoDB with transactions)
+    const session = await Student.startSession();
+    session.startTransaction();
+
+    try {
+      // Update payment status using the model's instance method
+      await student.updatePaymentStatus(PAYMENT_STATUS.SUCCESS, razorpay_payment_id);
+      
+      console.log("Payment completed successfully for student:", student.studentId);
+
+      // Prepare invoice data for email
+      const invoiceData = {
+        studentId: student.studentId,
+        studentEmail: student.email,
+        studentName: student.fullName,
+        invoiceLink: student.invoiceLink,
+        invoiceNumber: student.invoiceNumber,
+        programName: student.programName,
+        programDuration: student.programDuration,
+        addonNames: student.selectedAddonNames,
+        subtotal: student.subtotalINR,
+        gstRate: student.gstRate,
+        gstAmount: student.gstAmountINR,
+        total: student.totalINR,
+        paymentStatus: "Completed",
+        paymentDate: student.paymentDate,
+        paymentMethod: "Razorpay",
+        razorpayPaymentId: razorpay_payment_id,
+        razorpayOrderId: razorpay_order_id,
+      };
+
+      // Commit the transaction
+      await session.commitTransaction();
+      session.endSession();
+
+      // Send invoice email (after successful database update)
+      try {
+        const baseUrl = process.env.BASE_URL || "http://localhost:8000";
+        
+        const emailResponse = await fetch(`${baseUrl}/api/v1/invoices/send`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(invoiceData),
+        });
+
+        if (emailResponse.ok) {
+          console.log("Invoice email sent successfully to:", student.email);
+        } else {
+          const errorText = await emailResponse.text();
+          console.error("Failed to send invoice email:", errorText);
+          // Note: We don't fail the payment verification if email fails
+        }
+      } catch (emailError) {
+        console.error("Error sending invoice email:", emailError);
+        // Note: We don't fail the payment verification if email fails
+      }
+
+      // Return success response
+      res.json({
+        success: true,
+        message: "Payment verified and student enrolled successfully",
+        paymentId: razorpay_payment_id,
+        orderId: razorpay_order_id,
+        invoiceId: student.invoiceLink,
+        studentId: student.studentId,
+        invoiceLink: student.invoiceLink,
+        enrollmentStatus: student.status,
+        timestamp: new Date().toISOString(),
+        studentDetails: {
+          name: student.fullName,
+          email: student.email,
+          program: student.programName,
+          totalAmount: student.totalINR,
+          enrollmentDate: student.enrollmentDate
+        }
+      });
+
+    } catch (transactionError) {
+      // Rollback transaction on error
+      await session.abortTransaction();
+      session.endSession();
+      throw transactionError;
+    }
+
   } catch (error) {
     console.error("Error verifying payment:", error);
-    res.status(500).json({
+    
+    // Handle specific database errors
+    let errorMessage = "Payment verification failed";
+    let statusCode = 500;
+    
+    if (error.name === 'ValidationError') {
+      errorMessage = "Invalid student data";
+      statusCode = 400;
+    } else if (error.name === 'CastError') {
+      errorMessage = "Invalid student ID format";
+      statusCode = 400;
+    } else if (error.code === 11000) {
+      errorMessage = "Duplicate payment record";
+      statusCode = 409;
+    }
+
+    res.status(statusCode).json({
       success: false,
-      error: "Payment verification failed",
-      details: error.message,
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
       timestamp: new Date().toISOString()
     });
   }
 });
+
 
 export default router;
