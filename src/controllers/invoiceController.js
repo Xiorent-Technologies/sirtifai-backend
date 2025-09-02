@@ -48,6 +48,25 @@ router.get('/:id', async (req, res) => {
       });
     }
 
+    // Calculate GST amounts (since prices are inclusive)
+    const gstRate = student.gstRate || 18;
+    const gstMultiplier = 1 + (gstRate / 100); // 1.18 for 18% GST
+    
+    // Calculate program unit price without GST (for display)
+    const programUnitPriceExclusiveGST = Math.round(student.programUnitPrice / gstMultiplier);
+    
+    // Calculate program total price without GST
+    const programPriceExclusiveGST = Math.round(student.programPriceINR / gstMultiplier);
+    const programGSTAmount = student.programPriceINR - programPriceExclusiveGST;
+    
+    // Calculate addon price without GST
+    const addonPriceExclusiveGST = student.addonPriceINR ? Math.round(student.addonPriceINR / gstMultiplier) : 0;
+    const addonGSTAmount = student.addonPriceINR ? student.addonPriceINR - addonPriceExclusiveGST : 0;
+    
+    // Calculate totals
+    const subtotalExclusiveGST = programPriceExclusiveGST + addonPriceExclusiveGST;
+    const totalGSTAmount = programGSTAmount + addonGSTAmount;
+
     // Build invoice response
     res.json({
       success: true,
@@ -56,14 +75,21 @@ router.get('/:id', async (req, res) => {
         invoiceNumber: student.invoiceNumber,
         createdAt: student.createdAt,
         programName: student.programName,
-        programPriceINR: student.programPriceINR,
+        programUnitPrice: student.programUnitPrice, // Original unit price (inclusive)
+        programUnitPriceExclusiveGST: programUnitPriceExclusiveGST, // Unit price without GST
+        programPrice: student.programUnitPrice, // Original unit price
+        programPriceINR: student.programPriceINR, // Total program price (inclusive)
+        programPriceExclusiveGST: programPriceExclusiveGST, // Program total price without GST
         programDuration: student.programDuration,
         selectedAddonNames: student.selectedAddonNames,
-        addonPriceINR: student.addonPriceINR,
-        subtotalINR: student.subtotalINR,
-        gstRate: student.gstRate,
-        gstAmountINR: student.gstAmountINR,
-        totalINR: student.totalINR,
+        addonsData: student.addonsData, // Include the addons data array
+        addonPriceINR: student.addonPriceINR, // Total addon price (inclusive)
+        addonPriceExclusiveGST: addonPriceExclusiveGST, // Addon price without GST
+        subtotalINR: student.subtotalINR, // Total inclusive price
+        subtotalExclusiveGST: subtotalExclusiveGST, // Total without GST
+        gstRate: gstRate,
+        gstAmountINR: totalGSTAmount, // Calculated GST amount
+        totalINR: student.totalINR || student.subtotalINR,
         paymentStatus: student.paymentStatus,
         paymentMethod: student.paymentMethod || "Razorpay",
         paymentDate: student.paymentDate || student.createdAt,
@@ -102,8 +128,6 @@ router.get('/:id', async (req, res) => {
     });
   }
 });
-
-
 /**
  * POST /api/v1/invoices
  * Create new invoice

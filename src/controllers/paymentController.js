@@ -80,6 +80,7 @@ async function createStandardizedPackageData(selectedProductType, selectedProduc
     productData: product,
     addonsData,
     pricing: {
+      programUnitPrice: product.price,
       programPrice,
       addonPrice: totalAddonPrice,
       subtotal,
@@ -189,13 +190,14 @@ router.post('/create-order', async (req, res) => {
       selectedAddons,
       duration
     );
-
+    const programUnitPrice = standardizedData.pricing.programUnitPrice;
     const programPriceINR = standardizedData.pricing.programPrice;
     const addonPriceINR = standardizedData.pricing.addonPrice;
     const subtotalINR = standardizedData.pricing.subtotal;
     const addonsData = standardizedData.addonsData;
 
     console.log('Calculated pricing (INR):', {
+      programUnitPrice,
       programPriceINR,
       addonPriceINR,
       subtotalINR,
@@ -279,7 +281,7 @@ router.post('/create-order', async (req, res) => {
     const selectedAddonIds = Array.isArray(selectedAddons) ? selectedAddons : (selectedAddons ? [selectedAddons] : []);
 
     // Mock Student Record (replace with DB save)
-        const newStudent = new Student({
+    const newStudent = new Student({
       // Personal Details
       fullName: studentData.fullName,
       dateOfBirth: parsedDateOfBirth,
@@ -323,6 +325,7 @@ router.post('/create-order', async (req, res) => {
       selectedProgram: selectedProduct, // This should be ObjectId
       programName: product.name,
       programDuration: duration,
+      programUnitPrice,
       programPriceINR,
       selectedAddons: selectedAddonIds, // Array of ObjectIds
       selectedAddonNames: addonNames,
@@ -333,8 +336,11 @@ router.post('/create-order', async (req, res) => {
       invoiceNumber,
       subtotalINR,
       gstRate: GST_RATE * 100, 
-      gstAmountINR: subtotalINR * GST_RATE,
-      totalINR: subtotalINR * (1 + GST_RATE),
+      // gstAmountINR: 0,
+      totalINR: subtotalINR,
+      gstRate: GST_RATE * 100, 
+      // gstAmountINR: subtotalINR * GST_RATE,
+      // totalINR: subtotalINR * (1 + GST_RATE),
 
       // Payment Details
       paymentStatus: PAYMENT_STATUS.PROCESSING, // Use constant instead of string
@@ -376,7 +382,7 @@ router.post('/create-order', async (req, res) => {
         programPriceINR,
         addonPriceINR,
         subtotalINR,
-        gstAmountINR: subtotalINR * GST_RATE,
+        // gstAmountINR: subtotalINR * GST_RATE,
         totalAmountINR: subtotalINR * (1 + GST_RATE),
         duration,
         addonsData,
@@ -514,7 +520,7 @@ router.post('/verify', async (req, res) => {
         addonNames: student.selectedAddonNames,
         subtotal: student.subtotalINR,
         gstRate: student.gstRate,
-        gstAmount: student.gstAmountINR,
+        // gstAmount: student.gstAmountINR,
         total: student.totalINR,
         paymentStatus: "Completed",
         paymentDate: student.paymentDate,

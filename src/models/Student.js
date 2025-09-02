@@ -256,6 +256,17 @@ const studentSchema = new mongoose.Schema({
     min: [1, 'Program duration must be at least 1 month'],
     max: [60, 'Program duration cannot exceed 60 months'],
   },
+  programUnitPrice: {
+    type: Number,
+    required: [true, 'Program unit price is required'],
+    min: [0, 'Program unit price cannot be negative'],
+    validate: {
+      validator: function(price) {
+        return price >= 0 && price <= 10000000; // Max 1 crore
+      },
+      message: 'Program price must be between 0 and 10,000,000 INR',
+    },
+  },
   programPriceINR: {
     type: Number,
     required: [true, 'Program price is required'],
@@ -330,29 +341,29 @@ const studentSchema = new mongoose.Schema({
     max: [50, 'GST rate cannot exceed 50%'],
     default: 18, // Default GST rate in India
   },
-  gstAmountINR: {
-    type: Number,
-    required: [true, 'GST amount is required'],
-    min: [0, 'GST amount cannot be negative'],
-    validate: {
-      validator: function(gstAmount) {
-        const expectedGST = this.subtotalINR * (this.gstRate / 100);
-        return Math.abs(gstAmount - expectedGST) < 1; // Allow for rounding differences
-      },
-      message: 'GST amount must be calculated correctly from subtotal and GST rate',
-    },
-  },
+//   gstAmountINR: {
+//     type: Number,
+//     required: [true, 'GST amount is required'],
+//     min: [0, 'GST amount cannot be negative'],
+//     validate: {
+//       validator: function(gstAmount) {
+//         const expectedGST = this.subtotalINR * (this.gstRate / 100);
+//         return Math.abs(gstAmount - expectedGST) < 1; // Allow for rounding differences
+//       },
+//       message: 'GST amount must be calculated correctly from subtotal and GST rate',
+//     },
+//   },
   totalINR: {
     type: Number,
     required: [true, 'Total amount is required'],
     min: [0, 'Total amount cannot be negative'],
-    validate: {
-      validator: function(total) {
-        const expectedTotal = this.subtotalINR + this.gstAmountINR;
-        return Math.abs(total - expectedTotal) < 1; // Allow for rounding differences
-      },
-      message: 'Total must equal subtotal plus GST amount',
-    },
+    // validate: {
+    //   validator: function(total) {
+    //     const expectedTotal = this.subtotalINR + this.gstAmountINR;
+    //     return Math.abs(total - expectedTotal) < 1; // Allow for rounding differences
+    //   },
+    //   message: 'Total must equal subtotal plus GST amount',
+    // },
   },
 
   // 11. Payment Details
@@ -670,7 +681,7 @@ studentSchema.statics.getRevenueAnalytics = function(startDate, endDate) {
         totalRevenue: { $sum: '$totalINR' },
         programRevenue: { $sum: '$programPriceINR' },
         addonRevenue: { $sum: '$addonPriceINR' },
-        gstCollected: { $sum: '$gstAmountINR' },
+        // gstCollected: { $sum: '$gstAmountINR' },
         studentCount: { $sum: 1 },
         averageOrderValue: { $avg: '$totalINR' }
       }
