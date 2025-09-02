@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+coverage/
+
+# Logs
+logs/
+*.log
+
+# Environment files
+.env*
+
+# Package files
+package-lock.json
+yarn.lock
+
+# Docker files
+Dockerfile*
+docker-compose*
+
+# Documentation
+README.md
+docs/
+
+# Uploads
+uploads/
+
+# Test files (optional - you might want to format these)
+# *.test.js
+# *.spec.js
+
+# Minified files
+*.min.js
+*.min.css
+
+# Generated files
+*.generated.js
+*.generated.ts
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
