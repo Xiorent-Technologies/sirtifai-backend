@@ -42,11 +42,11 @@ const config = {
   JWT_REFRESH_EXPIRE: process.env.JWT_REFRESH_EXPIRE || '30d',
 
   // Email Configuration
-  EMAIL_HOST: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  EMAIL_PORT: parseInt(process.env.EMAIL_PORT, 10) || 587,
-  EMAIL_USER: process.env.EMAIL_USER || '',
-  EMAIL_PASS: process.env.EMAIL_PASS || '',
-  EMAIL_FROM: process.env.EMAIL_FROM || 'noreply@sirtifai.com',
+  PAYMENTS_EMAIL_HOST: process.env.PAYMENTS_EMAIL_HOST || 'smtp.gmail.com',
+  PAYMENTS_EMAIL_PORT: parseInt(process.env.PAYMENTS_EMAIL_PORT, 10) || 587,
+  PAYMENTS_EMAIL_USER: process.env.PAYMENTS_EMAIL_USER || '',
+  PAYMENTS_EMAIL_PASSWORD: process.env.PAYMENTS_EMAIL_PASSWORD || '',
+  PAYMENTS_EMAIL_FROM: process.env.PAYMENTS_EMAIL_FROM || 'payments@sirtifai.com',
 
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 900000, // 15 minutes

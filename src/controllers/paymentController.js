@@ -402,6 +402,153 @@ router.post('/create-order', async (req, res) => {
 });
 
 
+// Donation API
+router.post("/donate", async (req, res) => {
+  try {
+    console.log("Received donation request:", req.body)
+    const { amount, donor, receipt } = req.body
+
+    // Validate amount
+    if (!amount || isNaN(amount)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid or missing donation amount",
+        timestamp: new Date().toISOString(),
+      })
+    }
+
+    // Validate essential donor info
+    const requiredFields = ["fullName", "email", "mobile", "address", "city", "state", "country", "postalCode"]
+    const missing = requiredFields.filter((field) => !donor?.[field])
+    if (missing.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: `Missing required donor fields: ${missing.join(", ")}`,
+        timestamp: new Date().toISOString(),
+      })
+    }
+
+    // PAN mandatory if > ₹10,000
+    if (amount > 10000 && !donor?.pan) {
+      return res.status(400).json({
+        success: false,
+        error: "PAN is required for donations above ₹10,000",
+        timestamp: new Date().toISOString(),
+      })
+    }
+
+    // Initialize Razorpay
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID || "",
+      key_secret: process.env.RAZORPAY_KEY_SECRET || "",
+    })
+
+    // Create Razorpay order (amount in paise)
+    const options = {
+      amount: Math.round(amount * 100),
+      currency: "INR",
+      receipt: receipt || `donation_${Date.now()}`,
+      payment_capture: 1, // auto capture
+    }
+
+    const order = await razorpay.orders.create(options);
+
+    const donationId = uuidv4()
+
+    console.log("✅ Donation initiated:", {
+      donationId,
+      donor: {
+        fullName: donor.fullName,
+        email: donor.email,
+        mobile: donor.mobile,
+        amountINR: amount,
+        purpose: donor.purpose || "General",
+        anonymous: donor.anonymous || false,
+      },
+      orderId: order.id,
+    })
+
+    // Send response
+    res.json({
+      success: true,
+      ...order,
+      donationId,
+      orderId: order.id,
+      amountINR: amount,
+      currency: order.currency,
+      donor,
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    console.error("❌ Error creating donation order:", error)
+    res.status(500).json({
+      success: false,
+      error: "Failed to create donation order",
+      details: error.message,
+      timestamp: new Date().toISOString(),
+    })
+  }
+})
+
+router.post("/verify-donate", async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, donor, amount } = req.body
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required Razorpay payment details",
+        timestamp: new Date().toISOString(),
+      })
+    }
+
+    // ✅ Signature verification (HMAC SHA256)
+    const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "")
+    hmac.update(razorpay_order_id + "|" + razorpay_payment_id)
+    const generatedSignature = hmac.digest("hex")
+
+    if (generatedSignature !== razorpay_signature) {
+      return res.status(400).json({
+        success: false,
+        error: "Payment signature mismatch. Possible tampering detected.",
+        timestamp: new Date().toISOString(),
+      })
+    }
+
+    // ✅ Save donation record in DB (pseudo code)
+    const donationId = uuidv4()
+    console.log("✅ Verified donation:", {
+      donationId,
+      donor,
+      amount,
+      razorpay_order_id,
+      razorpay_payment_id,
+    })
+
+    // TODO: Save to DB (donations table) with donor details, receipt no., etc.
+
+    // ✅ Generate receipt response (will be sent via email/PDF later)
+    res.json({
+      success: true,
+      message: "Donation verified successfully",
+      donationId,
+      razorpay_order_id,
+      razorpay_payment_id,
+      donor,
+      amount,
+      receiptUrl: `https://yourdomain.org/receipts/${donationId}.pdf`,
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error: any) {
+    console.error("❌ Payment verification failed:", error)
+    res.status(500).json({
+      success: false,
+      error: "Failed to verify payment",
+      details: error.message,
+      timestamp: new Date().toISOString(),
+    })
+  }
+})
 
 /**
  * PUT /api/v1/payments/:id

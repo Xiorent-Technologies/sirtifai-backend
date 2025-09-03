@@ -3,6 +3,7 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import Student from '../models/Student.js'; // adjust path as needed
 import {  PAYMENT_STATUS } from '../config/constants.js';
+import { config } from '../config/index.js';
 
 // Load environment variables
 dotenv.config();
@@ -171,15 +172,26 @@ router.post('/send', async (req, res) => {
         error: 'Invoice not found'
       });
     }
+    const emailPort = parseInt(process.env.PAYMENTS_EMAIL_PORT, 10);
+    console.log("payments email transporter initialized", {
+      host: process.env.PAYMENTS_EMAIL_HOST,
+      port: emailPort,
+      secure: emailPort === 465,
+      user: process.env.PAYMENTS_EMAIL_USER,
+      pass: process.env.PAYMENTS_EMAIL_PASSWORD ? '****' : '(not provided)', // hide password in logs
+    });
 
     // Create email transporter
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
+        host: process.env.PAYMENTS_EMAIL_HOST,
+        port: emailPort,
+        secure: emailPort === 465,
+        auth: {
+          user: process.env.PAYMENTS_EMAIL_USER,
+          pass: process.env.PAYMENTS_EMAIL_PASSWORD
+        }
+      });
+
 
     // Generate invoice URL
     const baseUrl = process.env.BASE_URL || 'http://localhost:8000';
@@ -187,7 +199,7 @@ router.post('/send', async (req, res) => {
 
     // Email template
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: process.env.PAYMENTS_EMAIL_FROM,
       to: studentEmail,
       subject: `Invoice ${student.invoiceNumber} - SIRTIFAI Programme`,
       html: `

@@ -20,8 +20,8 @@ services:
       - JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-this-in-production
       - EMAIL_HOST=smtp.gmail.com
       - EMAIL_PORT=587
-      - EMAIL_USER=your-email@gmail.com
-      - EMAIL_PASS=your-app-password
+      - PAYMENTS_EMAIL_USER=your-email@gmail.com
+      - PAYMENTS_EMAIL_PASSWORD=your-app-password
       - EMAIL_FROM=noreply@sirtifai.com
     depends_on:
       mongodb:

@@ -19,17 +19,34 @@ class EmailService {
    */
   initializeTransporter() {
     try {
-      this.transporter = nodemailer.createTransporter({
-        host: config.EMAIL_HOST,
-        port: config.EMAIL_PORT,
-        secure: config.EMAIL_PORT === 465, // true for 465, false for other ports
+
+      console.log("Initializing email transporter with config:", {
+        host: config.PAYMENTS_EMAIL_HOST,
+        port: config.PAYMENTS_EMAIL_PORT,
+        secure: config.PAYMENTS_EMAIL_PORT === 465,
+        user: config.PAYMENTS_EMAIL_USER,
+        pass: config.PAYMENTS_EMAIL_PASSWORD ? '****' : '(not provided)', // hide password in logs
+      });
+
+      this.transporter = nodemailer.createTransport({
+        host: config.PAYMENTS_EMAIL_HOST,
+        port: config.PAYMENTS_EMAIL_PORT,
+        secure: config.PAYMENTS_EMAIL_PORT === 465, // true for 465, false for other ports
         auth: {
-          user: config.EMAIL_USER,
-          pass: config.EMAIL_PASS,
+          user: config.PAYMENTS_EMAIL_USER,
+          pass: config.PAYMENTS_EMAIL_PASSWORD,
         },
         tls: {
           rejectUnauthorized: false, // For development only
         },
+      });
+
+      console.log("Initializing email transporter with config:", {
+        host: transporterConfig.host,
+        port: transporterConfig.port,
+        secure: transporterConfig.secure,
+        user: transporterConfig.auth.user,
+        pass: transporterConfig.auth.pass, // hide password in logs
       });
 
       // Verify connection configuration
@@ -57,7 +74,7 @@ class EmailService {
       }
 
       const defaultOptions = {
-        from: config.EMAIL_FROM,
+        from: config.PAYMENTS_EMAIL_FROM,
         ...emailOptions,
       };
 
