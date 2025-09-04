@@ -23,15 +23,6 @@ function generateInvoiceNumber() {
   return `SRT/INT/${dateStr}/${randomNum}`;
 }
 
-// Mock currency conversion (replace with your actual currency service)
-async function getINRToUSDRate() {
-  // Mock rate - replace with actual API call
-  return 0.012; // 1 INR = 0.012 USD
-}
-
-function convertUSDToINR(usdAmount, inrToUsdRate) {
-  return usdAmount / inrToUsdRate;
-}
 
 // Updated function to handle multiple addons
 async function createStandardizedPackageData(selectedProductType, selectedProduct, selectedAddons, duration) {
@@ -539,7 +530,7 @@ router.post("/verify-donate", async (req, res) => {
       receiptUrl: `https://yourdomain.org/receipts/${donationId}.pdf`,
       timestamp: new Date().toISOString(),
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error("❌ Payment verification failed:", error)
     res.status(500).json({
       success: false,

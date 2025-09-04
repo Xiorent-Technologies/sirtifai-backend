@@ -3,6 +3,8 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 import paymentController from './controllers/paymentController.js';
 import invoiceController from './controllers/invoiceController.js';
+import adminController from './controllers/adminController.js';
+
 import { uploadSingle, uploadMultiple } from './middleware/upload.js';
 
 /**
@@ -27,6 +29,7 @@ app.use('/uploads', express.static('uploads'));
 // Routes
 app.use('/api/v1/payments', paymentController);
 app.use('/api/v1/invoices', invoiceController);
+app.use('/api/v1/admin', adminController);
 
 // File upload routes
 app.post('/api/v1/upload/single', uploadSingle, (req, res) => {
